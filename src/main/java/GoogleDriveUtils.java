@@ -156,7 +156,7 @@ public class GoogleDriveUtils {
         return getGoogleSubFolderByName(null,subFolderName);
     }
 
-    public static final File uploadFileIntoAppData(java.io.File localFile) throws IOException {
+    public static final File createFileInAppData(java.io.File localFile) throws IOException {
         File fileMetadata = new File();
         fileMetadata.setName(localFile.getName());
         fileMetadata.setParents(Collections.singletonList("appDataFolder"));
@@ -188,6 +188,13 @@ public class GoogleDriveUtils {
         getDriveService().files().get(fileId)
                 .executeMediaAndDownloadTo(outputStream);
         System.out.println("DOWNLOAD: DRIVE(id= "+fileId+") \t->\t LOCAL(path= "+ localFile.getAbsolutePath());
+        return;
+    }
+    public static final void updateFile(String fileId, java.io.File localFile) throws IOException {
+        FileContent mediaContent = new FileContent("text/plane", localFile);
+        getDriveService().files().update(fileId, new File(), mediaContent).execute();
+
+        System.out.println("UPDATE: LOCAL(path= "+localFile.getAbsolutePath()+") \t->\t DRIVE(id= "+fileId);
         return;
     }
 

@@ -30,12 +30,18 @@ public class DriveQuickstart {
 
         java.io.File localFile = new java.io.File(LOCAL_DRIVE_FOLDER, "deneme.txt");
         System.out.println("Upload file: "+localFile.getAbsolutePath());
-        File cloudFile = GoogleDriveUtils.uploadFileIntoAppData(localFile);
+        File cloudFile = GoogleDriveUtils.createFileInAppData(localFile);
 
         GoogleDriveUtils.getAppDataFileList();
 
         java.io.File downloadedFile = new java.io.File(LOCAL_DRIVE_FOLDER, "deneme2.txt");
         GoogleDriveUtils.downloadFile(cloudFile.getId(),downloadedFile);
+
+        java.io.File updatedFile = new java.io.File(LOCAL_DRIVE_FOLDER, "deneme_new.txt");
+        GoogleDriveUtils.updateFile(cloudFile.getId(),updatedFile );
+
+        java.io.File downloaded2File = new java.io.File(LOCAL_DRIVE_FOLDER, "deneme4.txt");
+        GoogleDriveUtils.downloadFile(cloudFile.getId(),downloaded2File);
 
     }
 }
