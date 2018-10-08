@@ -34,7 +34,7 @@ public class DriveQuickstart {
         Drive service = GoogleDriveUtils.getDriveService();
 
         // Print the names and IDs for up to 10 files.
-        FileList result = service.files().list()
+/*        FileList result = service.files().list()
                 .setPageSize(10)
                 .setFields("nextPageToken, files(id, name)")
                 .execute();
@@ -47,15 +47,19 @@ public class DriveQuickstart {
             for (File file : files) {
                 System.out.printf("%s (%s)\n", file.getName(), file.getId());
             }
-        }
+        } */
 
-        // 3: Create DriveCloud folder if it does not exist in cloud
-        List<File> rootFolders = GoogleDriveUtils.getGoogleRootFoldersByName(CLOUD_FOLDER_NAME);
+        // 3: Create DriveCloud folder if it does not exist in cloud TODO ?? is not in Apps folder
+/*        List<File> rootFolders = GoogleDriveUtils.getGoogleRootFoldersByName(CLOUD_FOLDER_NAME);
+        System.out.println("rootFolders size: "+rootFolders.size());
         if(rootFolders.size() == 0) {
             File folder = GoogleDriveUtils.createDriveFolder(null, CLOUD_FOLDER_NAME);
             System.out.println("Created folder with id= " + folder.getId());
             System.out.println("name= " + folder.getName());
-        }
+        } */
+
+        GoogleDriveUtils.insertFileIntoAppData("test.txt", null);
+        GoogleDriveUtils.getAppDataFiles();
 
     }
 }

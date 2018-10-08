@@ -17,6 +17,7 @@ import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.http.FileContent;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
@@ -39,7 +40,8 @@ public class GoogleDriveUtils {
      * Global instance of the scopes required by this quickstart.
      * If modifying these scopes, delete your previously saved structured credentials.
      */
-    private static final List<String> SCOPES = Collections.singletonList(DriveScopes.DRIVE);
+    private static final List<String> SCOPES = Collections.singletonList(DriveScopes.DRIVE_APPDATA);
+    //private static final List<String> SCOPES = Arrays.asList(AppsactivityScopes.ACTIVITY);
 
     // Global instance of the {@link FileDataStoreFactory}.
     private static FileDataStoreFactory DATA_STORE_FACTORY;
@@ -149,6 +151,42 @@ public class GoogleDriveUtils {
     // com.google.api.services.drive.model.File
     public static final List<File> getGoogleRootFoldersByName(String subFolderName) throws IOException {
         return getGoogleSubFolderByName(null,subFolderName);
+    }
+
+    public static final void insertFileIntoAppData(String filename, java.io.File filePath) throws IOException {
+        File fileMetadata = new File();
+        fileMetadata.setName(filename);
+        fileMetadata.setParents(Collections.singletonList("appDataFolder"));
+
+        if(filePath == null) {
+            File file = getDriveService().files().create(fileMetadata)
+                    .setFields("id")
+                    .execute();
+            System.out.println("Empty file created : File ID: " + file.getId());
+        }
+        else{
+            FileContent mediaContent = new FileContent("text/plane", filePath);
+            File file = getDriveService().files().create(fileMetadata, mediaContent)
+                    .setFields("id")
+                    .execute();
+            System.out.println(filePath.getAbsolutePath()+" copied to cloud : File ID: " + file.getId());
+        }
+        return;
+    }
+
+    public static final List<File> getAppDataFiles() throws IOException {
+        List<File> list = new ArrayList<File>();
+
+        FileList files = getDriveService().files().list()
+                .setSpaces("appDataFolder")
+                .setFields("nextPageToken, files(id, name)")
+                .setPageSize(10)
+                .execute();
+        for (File file : files.getFiles()) {
+            System.out.printf("Found file: %s (%s)\n", file.getName(), file.getId());
+            list.add(file);
+        }
+        return  list;
     }
 
 
