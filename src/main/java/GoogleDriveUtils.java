@@ -153,34 +153,25 @@ public class GoogleDriveUtils {
         return getGoogleSubFolderByName(null,subFolderName);
     }
 
-    public static final void insertFileIntoAppData(String filename, java.io.File filePath) throws IOException {
+    public static final File uploadFileIntoAppData(java.io.File localFile) throws IOException {
         File fileMetadata = new File();
-        fileMetadata.setName(filename);
+        fileMetadata.setName(localFile.getName());
         fileMetadata.setParents(Collections.singletonList("appDataFolder"));
 
-        if(filePath == null) {
-            File file = getDriveService().files().create(fileMetadata)
+        FileContent mediaContent = new FileContent("text/plane", localFile);
+        File file = getDriveService().files().create(fileMetadata, mediaContent)
                     .setFields("id")
                     .execute();
-            System.out.println("Empty file created : File ID: " + file.getId());
-        }
-        else{
-            FileContent mediaContent = new FileContent("text/plane", filePath);
-            File file = getDriveService().files().create(fileMetadata, mediaContent)
-                    .setFields("id")
-                    .execute();
-            System.out.println(filePath.getAbsolutePath()+" copied to cloud : File ID: " + file.getId());
-        }
-        return;
+            System.out.println(localFile.getAbsolutePath()+" copied to cloud : File ID: " + file.getId());
+        return file;
     }
 
-    public static final List<File> getAppDataFiles() throws IOException {
+    public static final List<File> getAppDataFileList() throws IOException {
         List<File> list = new ArrayList<File>();
 
         FileList files = getDriveService().files().list()
                 .setSpaces("appDataFolder")
                 .setFields("nextPageToken, files(id, name)")
-                .setPageSize(10)
                 .execute();
         for (File file : files.getFiles()) {
             System.out.printf("Found file: %s (%s)\n", file.getName(), file.getId());
