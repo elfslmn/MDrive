@@ -12,6 +12,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 import com.google.api.client.auth.oauth2.Credential;
@@ -169,8 +170,8 @@ public class GoogleDriveUtils {
         return file;
     }
 
-    public static final List<File> getAppDataFileList() throws IOException {
-        List<File> list = new ArrayList<File>();
+    public static final HashMap<String, File> getAppDataFileMap() throws IOException {
+        HashMap<String, File> map = new HashMap<String, File>();
 
         FileList files = getDriveService().files().list()
                 .setSpaces("appDataFolder")
@@ -178,17 +179,18 @@ public class GoogleDriveUtils {
                 .execute();
         for (File file : files.getFiles()) {
             System.out.printf("FOUND in drive: %s \t (%s)\n", file.getName(), file.getId());
-            list.add(file);
+            map.put(file.getName(), file);
         }
-        return  list;
+        return  map;
     }
 
-    public static final void downloadFile(String fileId, java.io.File localFile) throws IOException{
+    public static final java.io.File downloadFile(File cloudFile) throws IOException{
+        java.io.File localFile = new java.io.File(DriveQuickstart.LOCAL_DRIVE_FOLDER, cloudFile.getName());
         OutputStream outputStream = new FileOutputStream(localFile);
-        getDriveService().files().get(fileId)
+        getDriveService().files().get(cloudFile.getId())
                 .executeMediaAndDownloadTo(outputStream);
-        System.out.println("DOWNLOAD: DRIVE(id= "+fileId+") \t->\t LOCAL(path= "+ localFile.getAbsolutePath());
-        return;
+        System.out.println("DOWNLOAD: DRIVE(id= "+cloudFile.getId()+") \t->\t LOCAL(path= "+ localFile.getAbsolutePath());
+        return localFile;
     }
     public static final void updateFile(String fileId, java.io.File localFile) throws IOException {
         FileContent mediaContent = new FileContent("text/plane", localFile);
