@@ -1,4 +1,7 @@
+import com.google.api.services.drive.model.File;
+
 import java.io.IOException;
+import java.io.OutputStream;
 import java.security.GeneralSecurityException;
 
 // code from https://developers.google.com/drive/api/v3/quickstart/java
@@ -25,10 +28,14 @@ public class DriveQuickstart {
             System.out.println("Created Sync Folder: " + LOCAL_DRIVE_FOLDER.getAbsolutePath());
         }
 
-        java.io.File uploadFile = new java.io.File(LOCAL_DRIVE_FOLDER, "deneme.txt");
-        System.out.println("Upload file: "+uploadFile.getAbsolutePath());
-        GoogleDriveUtils.uploadFileIntoAppData(uploadFile);
+        java.io.File localFile = new java.io.File(LOCAL_DRIVE_FOLDER, "deneme.txt");
+        System.out.println("Upload file: "+localFile.getAbsolutePath());
+        File cloudFile = GoogleDriveUtils.uploadFileIntoAppData(localFile);
+
         GoogleDriveUtils.getAppDataFileList();
+
+        java.io.File downloadedFile = new java.io.File(LOCAL_DRIVE_FOLDER, "deneme2.txt");
+        GoogleDriveUtils.downloadFile(cloudFile.getId(),downloadedFile);
 
     }
 }

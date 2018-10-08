@@ -1,11 +1,14 @@
 /**
  * Created by esalman17 on 7.10.2018.
  */
+import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -162,7 +165,7 @@ public class GoogleDriveUtils {
         File file = getDriveService().files().create(fileMetadata, mediaContent)
                     .setFields("id")
                     .execute();
-            System.out.println(localFile.getAbsolutePath()+" copied to cloud : File ID: " + file.getId());
+        System.out.println("UPLOAD: LOCAL(path= "+localFile.getAbsolutePath()+") \t->\t DRIVE(id= "+file.getId());
         return file;
     }
 
@@ -174,10 +177,18 @@ public class GoogleDriveUtils {
                 .setFields("nextPageToken, files(id, name)")
                 .execute();
         for (File file : files.getFiles()) {
-            System.out.printf("Found file: %s (%s)\n", file.getName(), file.getId());
+            System.out.printf("FOUND in drive: %s \t (%s)\n", file.getName(), file.getId());
             list.add(file);
         }
         return  list;
+    }
+
+    public static final void downloadFile(String fileId, java.io.File localFile) throws IOException{
+        OutputStream outputStream = new FileOutputStream(localFile);
+        getDriveService().files().get(fileId)
+                .executeMediaAndDownloadTo(outputStream);
+        System.out.println("DOWNLOAD: DRIVE(id= "+fileId+") \t->\t LOCAL(path= "+ localFile.getAbsolutePath());
+        return;
     }
 
 
