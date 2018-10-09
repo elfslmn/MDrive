@@ -91,18 +91,23 @@ public class GoogleDriveUtils {
         return credential;
     }
 
-    public static Drive getDriveService() throws IOException {
+    public static Drive getDriveService() {
         if (_driveService != null) {
             return _driveService;
         }
-        Credential credential = getCredentials();
+        Credential credential = null;
+        try {
+            credential = getCredentials();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         //
         _driveService = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, credential) //
                 .setApplicationName(APPLICATION_NAME).build();
         return _driveService;
     }
 
-    public static final File createDriveFolder(String folderIdParent, String folderName) throws IOException {
+    public static final File createDriveFolder(String folderIdParent, String folderName) {
 
         File fileMetadata = new File();
 
@@ -116,14 +121,18 @@ public class GoogleDriveUtils {
 
         // Create a Folder.
         // Returns File object with id & name fields will be assigned values
-        File file = getDriveService().files().create(fileMetadata).setFields("id, name").execute();
+        File file = null;
+        try {
+            file = getDriveService().files().create(fileMetadata).setFields("id, name").execute();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         return file;
     }
 
     // com.google.api.services.drive.model.File
-    public static final List<File> getGoogleSubFolderByName(String googleFolderIdParent, String subFolderName)
-            throws IOException {
+    public static final List<File> getGoogleSubFolderByName(String googleFolderIdParent, String subFolderName) {
 
         String pageToken = null;
         List<File> list = new ArrayList<File>();
@@ -140,9 +149,14 @@ public class GoogleDriveUtils {
         }
 
         do {
-            FileList result = getDriveService().files().list().setQ(query).setSpaces("drive") //
-                    .setFields("nextPageToken, files(id, name, createdTime)")//
-                    .setPageToken(pageToken).execute();
+            FileList result = null;
+            try {
+                result = getDriveService().files().list().setQ(query).setSpaces("drive") //
+                        .setFields("nextPageToken, files(id, name, createdTime)")//
+                        .setPageToken(pageToken).execute();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             for (File file : result.getFiles()) {
                 list.add(file);
             }
@@ -153,58 +167,82 @@ public class GoogleDriveUtils {
     }
 
     // com.google.api.services.drive.model.File
-    public static final List<File> getGoogleRootFoldersByName(String subFolderName) throws IOException {
+    public static final List<File> getGoogleRootFoldersByName(String subFolderName){
         return getGoogleSubFolderByName(null,subFolderName);
     }
 
-    public static final File createFileInAppData(java.io.File localFile) throws IOException {
+    public static final File createFileInAppData(java.io.File localFile){
         System.out.println("Uploading "+ localFile.getName());
         File fileMetadata = new File();
         fileMetadata.setName(localFile.getName());
         fileMetadata.setParents(Collections.singletonList("appDataFolder"));
 
         FileContent mediaContent = new FileContent("text/plane", localFile);
-        File file = getDriveService().files().create(fileMetadata, mediaContent)
-                    .setFields("id")
-                    .execute();
+        File file = null;
+        try {
+            file = getDriveService().files().create(fileMetadata, mediaContent)
+                        .setFields("id")
+                        .execute();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         System.out.println("Upload completed for "+ localFile.getName());
         return file;
     }
 
-    public static final HashMap<String, File> getAppDataFileMap() throws IOException {
+    public static final HashMap<String, File> getAppDataFileMap() {
         HashMap<String, File> map = new HashMap<String, File>();
 
-        FileList files = getDriveService().files().list()
-                .setSpaces("appDataFolder")
-                .setFields("nextPageToken, files(id, name,size)")
-                .execute();
+        FileList files = null;
+        try {
+            files = getDriveService().files().list()
+                    .setSpaces("appDataFolder")
+                    .setFields("nextPageToken, files(id, name,size)")
+                    .execute();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        //System.out.println("DEBUG: Files in drive:");
         for (File file : files.getFiles()) {
-            System.out.printf("FOUND in drive: %s \t (%s)\n", file.getName(), file.getId());
+            //System.out.printf("%s \t (%s)\n", file.getName(), file.getId());
             map.put(file.getName(), file);
         }
         return  map;
     }
 
-    public static final java.io.File downloadFile(File cloudFile) throws IOException{
+    public static final java.io.File downloadFile(File cloudFile){
         System.out.println("Downloading "+cloudFile.getName());
         java.io.File localFile = new java.io.File(DriveQuickstart.LOCAL_DRIVE_FOLDER, cloudFile.getName());
-        OutputStream outputStream = new FileOutputStream(localFile);
-        getDriveService().files().get(cloudFile.getId())
-                .executeMediaAndDownloadTo(outputStream);
+        OutputStream outputStream = null;
+        try {
+            outputStream = new FileOutputStream(localFile);
+            getDriveService().files().get(cloudFile.getId())
+                    .executeMediaAndDownloadTo(outputStream);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         System.out.println("Download completed for "+cloudFile.getName());
         return localFile;
     }
 
-    public static final void updateFile(String fileId, java.io.File localFile) throws IOException {
+    public static final void updateFile(String fileId, java.io.File localFile){
         FileContent mediaContent = new FileContent("text/plane", localFile);
-        getDriveService().files().update(fileId, new File(), mediaContent).execute();
+        try {
+            getDriveService().files().update(fileId, new File(), mediaContent).execute();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         System.out.println("UPDATE: LOCAL(path= "+localFile.getAbsolutePath()+") \t->\t DRIVE(id= "+fileId);
         return;
     }
 
-    public static final void deleteFile(File cloudFile) throws IOException{
-        getDriveService().files().delete(cloudFile.getId()).execute();
+    public static final void deleteFile(File cloudFile){
+        try {
+            getDriveService().files().delete(cloudFile.getId()).execute();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         System.out.println("DELETE: DRIVE(id= "+ cloudFile.getId()+")");
     }
 
