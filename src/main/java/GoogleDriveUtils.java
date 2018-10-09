@@ -238,12 +238,13 @@ public class GoogleDriveUtils {
     }
 
     public static final void deleteFile(File cloudFile){
+        System.out.println("Deleting "+cloudFile.getName());
         try {
             getDriveService().files().delete(cloudFile.getId()).execute();
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.out.println("DELETE: DRIVE(id= "+ cloudFile.getId()+")");
+        System.out.println("Deleting from cloud completed for "+cloudFile.getName());
     }
 
 

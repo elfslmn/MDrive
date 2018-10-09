@@ -47,7 +47,7 @@ public class DriveQuickstart {
                 java.io.File[] localFiles = LOCAL_DRIVE_FOLDER.listFiles();
 
                 LinkedList<java.io.File> needUpload = new LinkedList<>();
-                LinkedList<File> needDownload = new LinkedList<>();
+                LinkedList<File> needDelete = new LinkedList<>();
                 syncedFiles.clear();
 
                 for(java.io.File localFile : localFiles){
@@ -66,19 +66,19 @@ public class DriveQuickstart {
                 for(String fileName: cloudFiles.keySet()){
                     // The file is only in CLOUD folder, download to local
                     if(!syncedFiles.containsKey(fileName)){
-                        needDownload.add(cloudFiles.get(fileName));
+                        needDelete.add(cloudFiles.get(fileName));
                     }
                 }
 
-                if(needDownload.size() == 0 && needUpload.size()==0){
+                if(needDelete.size() == 0 && needUpload.size()==0){
                     System.out.println("Current time: " + LocalDateTime.now() + ", no update is needed. Already synced!");
                 }else{
                     System.out.println("Current time: " + LocalDateTime.now() + ", the following files are going to be synchronized");
                     for(java.io.File f : needUpload){
                         System.out.println(f.getName()+" \tgoing to be uploaded to cloud\t Size= " + f.length()+" bytes");
                     }
-                    for(File f : needDownload){
-                        System.out.println(f.getName()+" \tgoing to be downloaded from cloud\t Size= " + f.getSize()  +" bytes");
+                    for(File f : needDelete){
+                        System.out.println(f.getName()+" \tgoing to be deleted from cloud\t Size= " + f.getSize()  +" bytes");
                     }
 
                     for(java.io.File localFile : needUpload){
@@ -86,10 +86,8 @@ public class DriveQuickstart {
                         SyncedFile sf = new SyncedFile(localFile, cloudFile, System.currentTimeMillis());
                         syncedFiles.put(localFile.getName(), sf);
                     }
-                    for(File cloudFile : needDownload){
-                        java.io.File localFile = GoogleDriveUtils.downloadFile(cloudFile);
-                        SyncedFile sf = new SyncedFile(localFile, cloudFile, System.currentTimeMillis());
-                        syncedFiles.put(localFile.getName(), sf);
+                    for(File cloudFile : needDelete){
+                        GoogleDriveUtils.deleteFile(cloudFile);
                     }
                     System.out.println("Synchronization done with Google Drive");
 
