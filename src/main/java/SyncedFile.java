@@ -7,11 +7,9 @@ import com.google.api.services.drive.model.File;
 public class SyncedFile {
     public java.io.File localFile;
     public File cloudFile;
-    public long lastSyncTime;
 
-    public SyncedFile(java.io.File localFile, File cloudFile, long lastSyncTime) {
+    public SyncedFile(java.io.File localFile, File cloudFile) {
         this.localFile = localFile;
         this.cloudFile = cloudFile;
-        this.lastSyncTime = lastSyncTime;
     }
 }

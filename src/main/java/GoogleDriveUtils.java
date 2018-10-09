@@ -226,6 +226,7 @@ public class GoogleDriveUtils {
     }
 
     public static final void updateFile(String fileId, java.io.File localFile){
+        System.out.println("Updating "+localFile.getName());
         FileContent mediaContent = new FileContent("text/plane", localFile);
         try {
             getDriveService().files().update(fileId, new File(), mediaContent).execute();
@@ -233,7 +234,7 @@ public class GoogleDriveUtils {
             e.printStackTrace();
         }
 
-        System.out.println("UPDATE: LOCAL(path= "+localFile.getAbsolutePath()+") \t->\t DRIVE(id= "+fileId);
+        System.out.println("Update completed for "+localFile.getName());
         return;
     }
 
