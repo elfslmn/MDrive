@@ -210,6 +210,7 @@ public class GoogleDriveUtils {
         return  map;
     }
 
+    //TODO giving error for empty files
     public static final java.io.File downloadFile(File cloudFile){
         System.out.println("Downloading "+cloudFile.getName());
         java.io.File localFile = new java.io.File(DriveQuickstart.LOCAL_DRIVE_FOLDER, cloudFile.getName());
