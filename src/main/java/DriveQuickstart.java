@@ -3,8 +3,10 @@ import com.google.api.services.drive.model.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.security.GeneralSecurityException;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 
 // code from https://developers.google.com/drive/api/v3/quickstart/java
@@ -31,32 +33,58 @@ public class DriveQuickstart {
             System.out.println("Created Sync Folder: " + LOCAL_DRIVE_FOLDER.getAbsolutePath());
         }
 
+        HashMap<String, SyncedFile> syncedFiles = new HashMap<String, SyncedFile>(); //TODO may use syncronized Map
+
         HashMap<String, File> cloudFiles = GoogleDriveUtils.getAppDataFileMap();
-
-        HashMap<String, SyncedFile> mFiles = new HashMap<String, SyncedFile>(); //TODO may use syncronized Map
-
         java.io.File[] localFiles = LOCAL_DRIVE_FOLDER.listFiles();
+
+        LinkedList<java.io.File> needUpload = new LinkedList<>();
+        LinkedList<File> needDownload = new LinkedList<>();
+
         for(java.io.File localFile : localFiles){
-            File cloudFile;
             // The file is only in LOCAL folder, send it to cloud
             if(!cloudFiles.containsKey(localFile.getName())){
-                cloudFile = GoogleDriveUtils.createFileInAppData(localFile);
+                needUpload.add(localFile);
             }else{
-                cloudFile = cloudFiles.get(localFile.getName());
+                File cloudFile = cloudFiles.get(localFile.getName());
+                SyncedFile sf = new SyncedFile(localFile, cloudFile, System.currentTimeMillis());
+                syncedFiles.put(localFile.getName(), sf);
             }
-            SyncedFile sf = new SyncedFile(localFile, cloudFile, System.currentTimeMillis());
-            mFiles.put(localFile.getName(), sf);
         }
 
         for(String fileName: cloudFiles.keySet()){
             // The file is only in CLOUD folder, download to local
-            if(!mFiles.containsKey(fileName)){
-                File cloudFile = cloudFiles.get(fileName);
-                java.io.File localFile = GoogleDriveUtils.downloadFile(cloudFile);
-                SyncedFile sf = new SyncedFile(localFile, cloudFile, System.currentTimeMillis());
-                mFiles.put(localFile.getName(), sf);
+            if(!syncedFiles.containsKey(fileName)){
+                needDownload.add(cloudFiles.get(fileName));
             }
         }
+
+        if(needDownload.size() == 0 && needUpload.size()==0){
+            System.out.println("Current time: " + LocalDateTime.now() + ", no update is needed. Already synced!");
+        }else{
+            System.out.println("Current time: " + LocalDateTime.now() + ", the following files are going to be synchronized");
+            for(java.io.File f : needUpload){
+                System.out.println(f.getName()+" \tgoing to be uploaded to cloud\t Size= " + f.length()+" bytes");
+            }
+            for(File f : needDownload){
+                System.out.println(f.getName()+" \tgoing to be downloaded from cloud\t Size= " + f.getSize()  +" bytes");
+            }
+
+            for(java.io.File localFile : needUpload){
+                File cloudFile = GoogleDriveUtils.createFileInAppData(localFile);
+                SyncedFile sf = new SyncedFile(localFile, cloudFile, System.currentTimeMillis());
+                syncedFiles.put(localFile.getName(), sf);
+            }
+            for(File cloudFile : needDownload){
+                java.io.File localFile = GoogleDriveUtils.downloadFile(cloudFile);
+                SyncedFile sf = new SyncedFile(localFile, cloudFile, System.currentTimeMillis());
+                syncedFiles.put(localFile.getName(), sf);
+            }
+            System.out.println("Synchronization done with Google Drive");
+
+        }
+
+
 
         GoogleDriveUtils.getAppDataFileMap();
 

@@ -158,6 +158,7 @@ public class GoogleDriveUtils {
     }
 
     public static final File createFileInAppData(java.io.File localFile) throws IOException {
+        System.out.println("Uploading "+ localFile.getName());
         File fileMetadata = new File();
         fileMetadata.setName(localFile.getName());
         fileMetadata.setParents(Collections.singletonList("appDataFolder"));
@@ -166,7 +167,7 @@ public class GoogleDriveUtils {
         File file = getDriveService().files().create(fileMetadata, mediaContent)
                     .setFields("id")
                     .execute();
-        System.out.println("UPLOAD: LOCAL(path= "+localFile.getAbsolutePath()+") \t->\t DRIVE(id= "+file.getId());
+        System.out.println("Upload completed for "+ localFile.getName());
         return file;
     }
 
@@ -175,7 +176,7 @@ public class GoogleDriveUtils {
 
         FileList files = getDriveService().files().list()
                 .setSpaces("appDataFolder")
-                .setFields("nextPageToken, files(id, name)")
+                .setFields("nextPageToken, files(id, name,size)")
                 .execute();
         for (File file : files.getFiles()) {
             System.out.printf("FOUND in drive: %s \t (%s)\n", file.getName(), file.getId());
@@ -185,19 +186,26 @@ public class GoogleDriveUtils {
     }
 
     public static final java.io.File downloadFile(File cloudFile) throws IOException{
+        System.out.println("Downloading "+cloudFile.getName());
         java.io.File localFile = new java.io.File(DriveQuickstart.LOCAL_DRIVE_FOLDER, cloudFile.getName());
         OutputStream outputStream = new FileOutputStream(localFile);
         getDriveService().files().get(cloudFile.getId())
                 .executeMediaAndDownloadTo(outputStream);
-        System.out.println("DOWNLOAD: DRIVE(id= "+cloudFile.getId()+") \t->\t LOCAL(path= "+ localFile.getAbsolutePath());
+        System.out.println("Download completed for "+cloudFile.getName());
         return localFile;
     }
+
     public static final void updateFile(String fileId, java.io.File localFile) throws IOException {
         FileContent mediaContent = new FileContent("text/plane", localFile);
         getDriveService().files().update(fileId, new File(), mediaContent).execute();
 
         System.out.println("UPDATE: LOCAL(path= "+localFile.getAbsolutePath()+") \t->\t DRIVE(id= "+fileId);
         return;
+    }
+
+    public static final void deleteFile(File cloudFile) throws IOException{
+        getDriveService().files().delete(cloudFile.getId()).execute();
+        System.out.println("DELETE: DRIVE(id= "+ cloudFile.getId()+")");
     }
 
 
