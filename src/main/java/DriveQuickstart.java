@@ -78,10 +78,10 @@ public class DriveQuickstart {
                 }
 
                 if(needDelete.size() == 0 && needUpload.size()==0 && needUpdate.size()==0){
-                    System.out.println("Current time: " + LocalDateTime.now() + ", no update is needed. Already synced!");
+                    System.out.println("Current time: " + LocalDateTime.now() + ",\tno update is needed. Already synced!");
                 }else{
                     // Print planning updates
-                    System.out.println("Current time: " + LocalDateTime.now() + ", the following files are going to be synchronized");
+                    System.out.println("Current time: " + LocalDateTime.now() + ",\tthe following files are going to be synchronized");
                     for(java.io.File f : needUpload){
                         System.out.println(f.getName()+" \tgoing to be uploaded to cloud\t Size= " + f.length()+" bytes");
                     }
@@ -108,7 +108,7 @@ public class DriveQuickstart {
                         syncedFiles.put(localFile.getName(), sf);
 
                     }
-                    System.out.println("Synchronization done with Google Drive");
+                    System.out.println("Current time"+LocalDateTime.now()+ ",\tSynchronization done with Google Drive");
                 }
                 lastSync = System.currentTimeMillis();
             }
