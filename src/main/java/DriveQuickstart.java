@@ -31,9 +31,9 @@ public class DriveQuickstart {
     public static void main(String... args) throws IOException, GeneralSecurityException {
 
         while(true) {
-            System.out.println("Choose mode, (1) for master, (0) for follower");
-            int i = input.nextInt();
-            if(i == 1){
+            System.out.println("Choose mode, (M) for master, (F) for follower");
+            String in = input.nextLine();
+            if(in.equals("M")|| in.equals("m")){
                 System.out.println("Mode : MASTER");
                 mode = Mode.MASTER;
                 LOCAL_DRIVE_FOLDER = new java.io.File(DESKTOP_FOLDER, "MasterDriveCloud");
@@ -48,7 +48,7 @@ public class DriveQuickstart {
 
                 break;
             }
-            else if(i == 0){
+            else if(in.equals("F")|| in.equals("f")){
                 System.out.println("Mode : FOLLOWER");
                 mode = Mode.FOLLOWER;
                 // TODO handle for multiple followers
