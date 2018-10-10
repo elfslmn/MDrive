@@ -1,9 +1,14 @@
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.DataOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.security.GeneralSecurityException;
 import java.util.HashMap;
 import java.util.Scanner;
@@ -26,76 +31,34 @@ public class DriveQuickstart {
 
     private static Scanner input = new Scanner(System.in);
     private static Mode mode = null;
-    public static final HashMap<String, SyncedFile> syncedFiles = new HashMap<String, SyncedFile>(); //TODO may use syncronized Map
+
+
+    public static final int COMMAND_PORT = 4444;
+    public static final int DATA_PORT = 4445;
+    public static final String IP_ADDRESS = "127.0.0.1"; // local host
 
     public static void main(String... args) throws IOException, GeneralSecurityException {
-
         while(true) {
             System.out.println("Choose mode, (M) for master, (F) for follower");
             String in = input.nextLine();
             if(in.equals("M")|| in.equals("m")){
                 System.out.println("Mode : MASTER");
                 mode = Mode.MASTER;
-                LOCAL_DRIVE_FOLDER = new java.io.File(DESKTOP_FOLDER, "MasterDriveCloud");
-                try {
-                    FileReader fr = new FileReader("master_data.txt");
-                    BufferedReader br = new BufferedReader(fr);
-                    String s = br.readLine();
-                    lastSync = Long.parseLong(s);
-                }catch (IOException ex){
-                    lastSync = -1;
-                }
-
+                Master m = new Master(CREDENTIALS_FOLDER, CLIENT_SECRET_FILE_NAME);
                 break;
             }
             else if(in.equals("F")|| in.equals("f")){
                 System.out.println("Mode : FOLLOWER");
-                mode = Mode.FOLLOWER;
-                // TODO handle for multiple followers
-                LOCAL_DRIVE_FOLDER = new java.io.File(DESKTOP_FOLDER, "FollowerDriveCloud");
-                try {
-                    FileReader fr = new FileReader("follower_data.txt");
-                    BufferedReader br = new BufferedReader(fr);
-                    String s = br.readLine();
-                    lastSync = Long.parseLong(s);
-                }catch (IOException ex){
-                    lastSync = -1;
-                }
-
+                System.out.print("Write a folder name for sync :");
+                in = input.nextLine();
+                input.close();
+                Follower f = new Follower(in);
                 break;
             }
             System.out.println("Invalid input");
         }
 
-        // 1: Create CREDENTIALS_FOLDER
-        if (!CREDENTIALS_FOLDER.exists()) {
-            CREDENTIALS_FOLDER.mkdirs();
-            System.out.println("Created Folder: " + CREDENTIALS_FOLDER.getAbsolutePath());
-            System.out.println("Copy file " + CLIENT_SECRET_FILE_NAME + " into folder above.. and rerun this class!!");
-            return;
-        }
-
-        // 2: Create DriveCloud folder if it does not exist in local
-        if (!LOCAL_DRIVE_FOLDER.exists()) {
-            LOCAL_DRIVE_FOLDER.mkdirs();
-            System.out.println("Created Sync Folder: " + LOCAL_DRIVE_FOLDER.getAbsolutePath());
-        }
-
-        if(mode == Mode.MASTER) {
-            driveSynchroniser.scheduleWithFixedDelay(new MasterCloudSynchronizer(), 0, 30, TimeUnit.SECONDS);
-        }
-
-        while(true){
-            String s = input.nextLine();
-            if(s.equals("quit")){
-                System.out.println("Program will be closed");
-                if(mode == Mode.MASTER) driveSynchroniser.shutdownNow();
-                break;
-            }
-        }
-        input.close();
-
-        // Save the last sync time for further use of project
+ /*       // Save the last sync time for further use of project
         FileWriter fw;
         if(mode == Mode.MASTER) {
             fw = new FileWriter("master_data.txt");
@@ -107,9 +70,7 @@ public class DriveQuickstart {
         bw.write(""+lastSync);
 
         bw.close();
-        fw.close();
-
-        return;
+        fw.close(); */
     }
 }
 

@@ -12,12 +12,12 @@ public class MasterCloudSynchronizer implements Runnable {
     @Override
     public void run() {
         HashMap<String, File> cloudFiles = GoogleDriveUtils.getAppDataFileMap();
-        java.io.File[] localFiles = DriveQuickstart.LOCAL_DRIVE_FOLDER.listFiles();
+        java.io.File[] localFiles = Master.LOCAL_DRIVE_FOLDER.listFiles();
 
         LinkedList<java.io.File> needUpload = new LinkedList<>();
         LinkedList<File> needDelete = new LinkedList<>();
         LinkedList<java.io.File> needUpdate = new LinkedList<>();
-        DriveQuickstart.syncedFiles.clear();
+        Master.syncedFiles.clear();
 
         for (java.io.File localFile : localFiles) {
             // The file is only in LOCAL folder, send it to cloud
@@ -25,13 +25,13 @@ public class MasterCloudSynchronizer implements Runnable {
                 needUpload.add(localFile);
             } else {
                 // The file in the local is updated since last sync
-                if (localFile.lastModified() > DriveQuickstart.lastSync) {
+                if (localFile.lastModified() > Master.lastSync) {
                     needUpdate.add(localFile);
-                    DriveQuickstart.syncedFiles.put(localFile.getName(), null);
+                    Master.syncedFiles.put(localFile.getName(), null);
                 } else {
                     File cloudFile = cloudFiles.get(localFile.getName());
                     SyncedFile sf = new SyncedFile(localFile, cloudFile);
-                    DriveQuickstart.syncedFiles.put(localFile.getName(), sf);
+                    Master.syncedFiles.put(localFile.getName(), sf);
                 }
 
             }
@@ -39,7 +39,7 @@ public class MasterCloudSynchronizer implements Runnable {
 
         for (String cloudFile : cloudFiles.keySet()) {
             // The file is only in CLOUD folder, delete from local
-            if (!DriveQuickstart.syncedFiles.containsKey(cloudFile)) {
+            if (!Master.syncedFiles.containsKey(cloudFile)) {
                 needDelete.add(cloudFiles.get(cloudFile));
             }
         }
@@ -63,7 +63,7 @@ public class MasterCloudSynchronizer implements Runnable {
             for (java.io.File localFile : needUpload) {
                 File cloudFile = GoogleDriveUtils.createFileInAppData(localFile);
                 SyncedFile sf = new SyncedFile(localFile, cloudFile);
-                DriveQuickstart.syncedFiles.put(localFile.getName(), sf);
+                Master.syncedFiles.put(localFile.getName(), sf);
             }
             for (File cloudFile : needDelete) {
                 GoogleDriveUtils.deleteFile(cloudFile);
@@ -72,11 +72,11 @@ public class MasterCloudSynchronizer implements Runnable {
                 File cloudFile = cloudFiles.get(localFile.getName());
                 GoogleDriveUtils.updateFile(cloudFile.getId(), localFile);
                 SyncedFile sf = new SyncedFile(localFile, cloudFile);
-                DriveQuickstart.syncedFiles.put(localFile.getName(), sf);
+                Master.syncedFiles.put(localFile.getName(), sf);
 
             }
             System.out.println("Current time: " + LocalDateTime.now() + ",\tSynchronization done with Google Drive");
         }
-        DriveQuickstart.lastSync = System.currentTimeMillis();
+        Master.lastSync = System.currentTimeMillis();
     }
 }
