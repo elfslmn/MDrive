@@ -1,6 +1,6 @@
 import com.google.api.services.drive.model.File;
 
-import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 
@@ -11,7 +11,10 @@ import java.util.LinkedList;
 public class MasterCloudSynchronizer implements Runnable {
     @Override
     public void run() {
+        // 1: get file list of cloud
+        // Map key = file name , value = drive file
         HashMap<String, File> cloudFiles = GoogleDriveUtils.getAppDataFileMap();
+        // 2: get file list in local ( master)
         java.io.File[] localFiles = Master.LOCAL_DRIVE_FOLDER.listFiles();
 
         LinkedList<java.io.File> needUpload = new LinkedList<>();
@@ -24,11 +27,15 @@ public class MasterCloudSynchronizer implements Runnable {
             if (!cloudFiles.containsKey(localFile.getName())) {
                 needUpload.add(localFile);
             } else {
+                Date localLastMod = new Date(localFile.lastModified());
+                Date cloudLastMod = DateParser.parse(cloudFiles.get(localFile.getName()).getModifiedTime().toString());
                 // The file in the local is updated since last sync
-                if (localFile.lastModified() > Master.lastSync) {
+                if (localLastMod.after(cloudLastMod)) {
                     needUpdate.add(localFile);
                     Master.syncedFiles.put(localFile.getName(), null);
-                } else {
+                }
+                // The files has already synced
+                else {
                     File cloudFile = cloudFiles.get(localFile.getName());
                     SyncedFile sf = new SyncedFile(localFile, cloudFile);
                     Master.syncedFiles.put(localFile.getName(), sf);
@@ -38,17 +45,18 @@ public class MasterCloudSynchronizer implements Runnable {
         }
 
         for (String cloudFile : cloudFiles.keySet()) {
-            // The file is only in CLOUD folder, delete from local
+            // The file is only in CLOUD folder, since there is one master, it should be deleted from master local folder
             if (!Master.syncedFiles.containsKey(cloudFile)) {
                 needDelete.add(cloudFiles.get(cloudFile));
             }
         }
 
         if (needDelete.size() == 0 && needUpload.size() == 0 && needUpdate.size() == 0) {
-            System.out.println("Current time: " + LocalDateTime.now() + ",\tno update is needed. Already synced!");
-        } else {
+            System.out.println("Current time: " + new Date() + ",\tno update is needed. Already synced!");
+        }
+        else {
             // Print planning updates
-            System.out.println("Current time: " + LocalDateTime.now() + ",\tthe following files are going to be synchronized");
+            System.out.println("Current time: " + new Date() + ",\tthe following files are going to be synchronized");
             for (java.io.File f : needUpload) {
                 System.out.println(f.getName() + " \tgoing to be uploaded to cloud\t Size= " + f.length() + " bytes");
             }
@@ -75,8 +83,7 @@ public class MasterCloudSynchronizer implements Runnable {
                 Master.syncedFiles.put(localFile.getName(), sf);
 
             }
-            System.out.println("Current time: " + LocalDateTime.now() + ",\tSynchronization done with Google Drive");
+            System.out.println("Current time: " + new Date() + ",\tSynchronization done with Google Drive");
         }
-        Master.lastSync = System.currentTimeMillis();
     }
 }

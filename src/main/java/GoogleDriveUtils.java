@@ -1,7 +1,6 @@
 /**
  * Created by esalman17 on 7.10.2018.
  */
-import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -9,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -31,12 +31,19 @@ import com.google.api.services.drive.DriveScopes;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 
+// code from https://developers.google.com/drive/api/v3/quickstart/java
+// https://o7planning.org/en/11889/manipulating-files-and-folders-on-google-drive-using-java#
 public class GoogleDriveUtils {
     private static final String APPLICATION_NAME = "MDrive";
 
+    /**
+     * GLobal instance of the {@link JsonFactory}.
+     */
     private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
 
-    // Directory to store user credentials for this application.
+    /**
+     * Directory to store user credentials for this application
+     */
     public static final java.io.File CREDENTIALS_FOLDER = new java.io.File(System.getProperty("user.home"), "credentials");
     public static final String CLIENT_SECRET_FILE_NAME = "client_secret.json";
 
@@ -45,12 +52,15 @@ public class GoogleDriveUtils {
      * If modifying these scopes, delete your previously saved structured credentials.
      */
     private static final List<String> SCOPES = Collections.singletonList(DriveScopes.DRIVE_APPDATA);
-    //private static final List<String> SCOPES = Arrays.asList(AppsactivityScopes.ACTIVITY);
 
-    // Global instance of the {@link FileDataStoreFactory}.
+    /**
+     * Global instance of the {@link FileDataStoreFactory}.
+     */
     private static FileDataStoreFactory DATA_STORE_FACTORY;
 
-    // Global instance of the HTTP transport.
+    /**
+     * Global instance of the HTTP transport.
+     */
     private static HttpTransport HTTP_TRANSPORT;
 
     private static Drive _driveService;
@@ -70,7 +80,7 @@ public class GoogleDriveUtils {
      * @return An authorized Credential object.
      * @throws IOException If the credentials.json file cannot be found.
      */
-    public static Credential getCredentials() throws IOException {
+    public static Credential getCredentials() throws FileNotFoundException {
 
         java.io.File clientSecretFilePath = new java.io.File(CREDENTIALS_FOLDER, CLIENT_SECRET_FILE_NAME);
 
@@ -79,18 +89,33 @@ public class GoogleDriveUtils {
                     + " to folder: " + CREDENTIALS_FOLDER.getAbsolutePath());
         }
 
-        InputStream in = new FileInputStream(clientSecretFilePath);
+        InputStream in = null;
+        try {
+            in = new FileInputStream(clientSecretFilePath);
+        } catch (FileNotFoundException e) {
+            throw new FileNotFoundException("Please copy " + CLIENT_SECRET_FILE_NAME //
+                    + " to folder: " + CREDENTIALS_FOLDER.getAbsolutePath());
+        }
 
-        GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
+        Credential credential = null;
+        try {
+            GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
+            // Build flow and trigger user authorization request.
+            GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(HTTP_TRANSPORT, JSON_FACTORY, clientSecrets, SCOPES)
+                                                                              .setDataStoreFactory(DATA_STORE_FACTORY).setAccessType("offline").build();
+            credential = new AuthorizationCodeInstalledApp(flow, new LocalServerReceiver()).authorize("user");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-        // Build flow and trigger user authorization request.
-        GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(HTTP_TRANSPORT, JSON_FACTORY,
-                clientSecrets, SCOPES).setDataStoreFactory(DATA_STORE_FACTORY).setAccessType("offline").build();
-        Credential credential = new AuthorizationCodeInstalledApp(flow, new LocalServerReceiver()).authorize("user");
 
         return credential;
     }
 
+    /**
+     *  Build a new drive object for the application if it has not been already built.
+     * @return the drive service
+     */
     public static Drive getDriveService() {
         if (_driveService != null) {
             return _driveService;
@@ -107,70 +132,11 @@ public class GoogleDriveUtils {
         return _driveService;
     }
 
-    public static final File createDriveFolder(String folderIdParent, String folderName) {
-
-        File fileMetadata = new File();
-
-        fileMetadata.setName(folderName);
-        fileMetadata.setMimeType("application/vnd.google-apps.folder");
-
-        if (folderIdParent != null) {
-            List<String> parents = Arrays.asList(folderIdParent);
-            fileMetadata.setParents(parents);
-        }
-
-        // Create a Folder.
-        // Returns File object with id & name fields will be assigned values
-        File file = null;
-        try {
-            file = getDriveService().files().create(fileMetadata).setFields("id, name").execute();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return file;
-    }
-
-    // com.google.api.services.drive.model.File
-    public static final List<File> getGoogleSubFolderByName(String googleFolderIdParent, String subFolderName) {
-
-        String pageToken = null;
-        List<File> list = new ArrayList<File>();
-
-        String query = null;
-        if (googleFolderIdParent == null) {
-            query = " name = '" + subFolderName + "' " //
-                    + " and mimeType = 'application/vnd.google-apps.folder' " //
-                    + " and 'root' in parents";
-        } else {
-            query = " name = '" + subFolderName + "' " //
-                    + " and mimeType = 'application/vnd.google-apps.folder' " //
-                    + " and '" + googleFolderIdParent + "' in parents";
-        }
-
-        do {
-            FileList result = null;
-            try {
-                result = getDriveService().files().list().setQ(query).setSpaces("drive") //
-                        .setFields("nextPageToken, files(id, name, createdTime)")//
-                        .setPageToken(pageToken).execute();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            for (File file : result.getFiles()) {
-                list.add(file);
-            }
-            pageToken = result.getNextPageToken();
-        } while (pageToken != null);
-        //
-        return list;
-    }
-
-    // com.google.api.services.drive.model.File
-    public static final List<File> getGoogleRootFoldersByName(String subFolderName){
-        return getGoogleSubFolderByName(null,subFolderName);
-    }
-
+    /**
+     * Creates a file in the app data of the drive by using the content and name of the local file
+     * @param localFile file that be uploaded
+     * @return drive file that newly created
+     */
     public static final File createFileInAppData(java.io.File localFile){
         System.out.println("Uploading "+ localFile.getName());
         File fileMetadata = new File();
@@ -184,12 +150,16 @@ public class GoogleDriveUtils {
                         .setFields("id")
                         .execute();
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("The file cannot be created.");
         }
         System.out.println("Upload completed for "+ localFile.getName());
         return file;
     }
 
+    /**
+     * Gets list of the file in app data folder
+     * @return map of the files whose keys are file names and values are drive file objects
+     */
     public static final HashMap<String, File> getAppDataFileMap() {
         HashMap<String, File> map = new HashMap<String, File>();
 
@@ -197,10 +167,10 @@ public class GoogleDriveUtils {
         try {
             files = getDriveService().files().list()
                     .setSpaces("appDataFolder")
-                    .setFields("nextPageToken, files(id, name,size)")
+                    .setFields("nextPageToken, files(id, name,size,modifiedTime)")
                     .execute();
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("File list cannot be obtained. Check your internet connection.");
         }
         //System.out.println("DEBUG: Files in drive:");
         for (File file : files.getFiles()) {
@@ -211,40 +181,56 @@ public class GoogleDriveUtils {
     }
 
     //TODO giving error for empty files
-    public static final java.io.File downloadFile(File cloudFile){
+
+    /**
+     *  Download the file from the drive into specified folder
+     * @param cloudFile file that will be downloaded from the cloud
+     * @param folder folder that the file is downloaded into
+     * @return local instance of the newly downloaded file
+     */
+    public static final java.io.File downloadFile(File cloudFile, java.io.File folder){
         System.out.println("Downloading "+cloudFile.getName());
-        java.io.File localFile = new java.io.File(DriveQuickstart.LOCAL_DRIVE_FOLDER, cloudFile.getName());
-        OutputStream outputStream = null;
+        java.io.File localFile = new java.io.File(folder, cloudFile.getName());
         try {
-            outputStream = new FileOutputStream(localFile);
+            OutputStream outputStream = new FileOutputStream(localFile);
             getDriveService().files().get(cloudFile.getId())
                     .executeMediaAndDownloadTo(outputStream);
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("The file cannot be donwloaded.");
         }
         System.out.println("Download completed for "+cloudFile.getName());
         return localFile;
     }
 
+    /**
+     *  Updates the file in the drive by using content of the local file
+     * @param fileId  The id of the file in the cloud
+     * @param localFile The file whose content will be uploaded
+     */
     public static final void updateFile(String fileId, java.io.File localFile){
         System.out.println("Updating "+localFile.getName());
-        FileContent mediaContent = new FileContent("text/plane", localFile);
         try {
+            String mimeType = Files.probeContentType(localFile.toPath());
+            FileContent mediaContent = new FileContent(mimeType, localFile);
             getDriveService().files().update(fileId, new File(), mediaContent).execute();
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("The file cannot be updated.");
         }
 
         System.out.println("Update completed for "+localFile.getName());
         return;
     }
 
+    /**
+     * Deletes the file from the cloud
+     * @param cloudFile the file that will be deleted
+     */
     public static final void deleteFile(File cloudFile){
         System.out.println("Deleting "+cloudFile.getName());
         try {
             getDriveService().files().delete(cloudFile.getId()).execute();
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("The file cannot be deleted.");
         }
         System.out.println("Deleting from cloud completed for "+cloudFile.getName());
     }
