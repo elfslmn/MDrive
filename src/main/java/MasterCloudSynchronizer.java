@@ -8,6 +8,9 @@ import java.util.LinkedList;
  * Created by esalman17 on 9.10.2018.
  */
 
+/**
+ * This class sync the files in the local drive folder and the app data folder in the cloud
+ */
 public class MasterCloudSynchronizer implements Runnable {
     @Override
     public void run() {
@@ -51,6 +54,7 @@ public class MasterCloudSynchronizer implements Runnable {
             }
         }
 
+        //if there is no change in the files, no update needed.
         if (needDelete.size() == 0 && needUpload.size() == 0 && needUpdate.size() == 0) {
             System.out.println("Current time: " + new Date() + ",\tno update is needed. Already synced!");
         }

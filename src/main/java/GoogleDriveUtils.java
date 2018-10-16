@@ -9,8 +9,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -31,25 +29,26 @@ import com.google.api.services.drive.DriveScopes;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 
-// code from https://developers.google.com/drive/api/v3/quickstart/java
+// The class contains code snippets from the websites below
+// https://developers.google.com/drive/api/v3/quickstart/java
 // https://o7planning.org/en/11889/manipulating-files-and-folders-on-google-drive-using-java#
 public class GoogleDriveUtils {
     private static final String APPLICATION_NAME = "MDrive";
 
     /**
-     * GLobal instance of the {@link JsonFactory}.
+     * Global instance of the {@link JsonFactory}.
      */
     private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
 
     /**
      * Directory to store user credentials for this application
      */
-    public static final java.io.File CREDENTIALS_FOLDER = new java.io.File(System.getProperty("user.home"), "credentials");
-    public static final String CLIENT_SECRET_FILE_NAME = "client_secret.json";
+    public static final java.io.File CREDENTIALS_FOLDER = DriveQuickstart.CREDENTIALS_FOLDER;
+    public static String CREDENTIAL_FILE_NAME = DriveQuickstart.CREDENTIAL_FILE_NAME;
 
     /**
      * Global instance of the scopes required by this quickstart.
-     * If modifying these scopes, delete your previously saved structured credentials.
+     * If modifying these scopes, delete the StoredCredential file.
      */
     private static final List<String> SCOPES = Collections.singletonList(DriveScopes.DRIVE_APPDATA);
 
@@ -82,18 +81,18 @@ public class GoogleDriveUtils {
      */
     public static Credential getCredentials() throws FileNotFoundException {
 
-        java.io.File clientSecretFilePath = new java.io.File(CREDENTIALS_FOLDER, CLIENT_SECRET_FILE_NAME);
+        java.io.File credentialFilePath = new java.io.File(CREDENTIALS_FOLDER, CREDENTIAL_FILE_NAME);
 
-        if (!clientSecretFilePath.exists()) {
-            throw new FileNotFoundException("Please copy " + CLIENT_SECRET_FILE_NAME //
+        if (!credentialFilePath.exists()) {
+            throw new FileNotFoundException("Please copy " + CREDENTIAL_FILE_NAME //
                     + " to folder: " + CREDENTIALS_FOLDER.getAbsolutePath());
         }
 
         InputStream in = null;
         try {
-            in = new FileInputStream(clientSecretFilePath);
+            in = new FileInputStream(credentialFilePath);
         } catch (FileNotFoundException e) {
-            throw new FileNotFoundException("Please copy " + CLIENT_SECRET_FILE_NAME //
+            throw new FileNotFoundException("Please copy " + CREDENTIAL_FILE_NAME //
                     + " to folder: " + CREDENTIALS_FOLDER.getAbsolutePath());
         }
 
