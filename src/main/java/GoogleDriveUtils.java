@@ -142,9 +142,12 @@ public class GoogleDriveUtils {
         fileMetadata.setName(localFile.getName());
         fileMetadata.setParents(Collections.singletonList("appDataFolder"));
 
-        FileContent mediaContent = new FileContent("text/plane", localFile);
+
+        //FileContent mediaContent = new FileContent("text/plane", localFile);
         File file = null;
         try {
+            String mimeType = Files.probeContentType(localFile.toPath());
+            FileContent mediaContent = new FileContent(mimeType, localFile);
             file = getDriveService().files().create(fileMetadata, mediaContent)
                         .setFields("id")
                         .execute();
