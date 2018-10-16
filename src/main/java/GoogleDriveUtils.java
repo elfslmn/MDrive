@@ -47,7 +47,7 @@ public class GoogleDriveUtils {
     public static String CREDENTIAL_FILE_NAME = DriveQuickstart.CREDENTIAL_FILE_NAME;
 
     /**
-     * Global instance of the scopes required by this quickstart.
+     * Global instance of the scopes required.
      * If modifying these scopes, delete the StoredCredential file.
      */
     private static final List<String> SCOPES = Collections.singletonList(DriveScopes.DRIVE_APPDATA);
